@@ -32,14 +32,13 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
 
-    @PreAuthorize("ROLE_ADMIN")
+    
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> findById(@PathVariable Long id) {
         Usuario obj = this.usuarioService.findById(id);
         return ResponseEntity.ok().body(obj);
     }
-
-    @PreAuthorize("ROLE_ADMIN")
+    
     @PostMapping
     public ResponseEntity<Void> create(@Valid @RequestBody UsuarioCreateDTO obj) {
         Usuario Usuario = this.usuarioService.fromDTO(obj);
@@ -48,8 +47,7 @@ public class UsuarioController {
                 .path("/{id}").buildAndExpand(newUsuario.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
-
-    @PreAuthorize("ROLE_ADMIN")
+    
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@Valid @RequestBody UsuarioUpdateDTO obj, @PathVariable Long id) {
         obj.setId(id);
@@ -57,8 +55,7 @@ public class UsuarioController {
         this.usuarioService.update(Usuario);
         return ResponseEntity.noContent().build();
     }
-
-    @PreAuthorize("ROLE_ADMIN")
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         this.usuarioService.delete(id);

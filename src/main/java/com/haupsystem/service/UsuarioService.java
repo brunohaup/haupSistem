@@ -1,5 +1,6 @@
 package com.haupsystem.service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,11 +43,18 @@ public class UsuarioService {
         return Usuario.orElseThrow(() -> new ObjectNotFoundException(
                 "Usuário não encontrado! Id: " + id + ", Tipo: " + Usuario.class.getName()));
     }
+    
+    public List<Usuario> listar() {
+        UserSpringSecurity usuarioLogado = authenticated();
+        if (usuarioLogado == null || !usuarioLogado.hasRole(ProfileEnum.ADMIN)) {
+            throw new AuthorizationException("Acesso negado!");
+        }
+        return repositorioUsuario.findAll();
+    }
 
     @Transactional
     public Usuario create(Usuario obj) {
         obj.setId(null);
-        obj.setPassword(this.bCryptPasswordEncoder.encode(obj.getPassword()));
         obj.setProfiles(Stream.of(ProfileEnum.USER.getCode()).collect(Collectors.toSet()));
         obj = this.repositorioUsuario.save(obj);
         return obj;
@@ -79,8 +87,12 @@ public class UsuarioService {
     
     public Usuario fromDTO(@Valid UsuarioCreateDTO obj) {
     	Usuario user = new Usuario();
-        user.setUsername(obj.getUsername());
-        user.setPassword(obj.getPassword());
+    	user.setUsername(obj.getUserName());
+    	user.setPassword(this.bCryptPasswordEncoder.encode(obj.getPassword()));
+    	user.setAtiva(true);
+    	user.setNome(obj.getNome());
+    	user.setEmail(obj.getEmail());
+    	user.setIdentificador(obj.getIdentificador());
         return user;
     }
 

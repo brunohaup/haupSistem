@@ -42,14 +42,10 @@ public class Usuario {
     @NotBlank
     private String password;
     
-    /*@Column(name="superUsuario")
-	private Boolean superUsuario;
-	
-	@Column(name="email", length = 255, nullable = false, unique = true)
-	@NotBlank
+	@Column(name="email", length = 100, nullable = true)
 	private String email;
 	
-	@Column(name="nome", length = 255, nullable = false)
+	@Column(name="nome", length = 100, nullable = false)
 	@NotBlank
 	private String nome;
 	
@@ -57,7 +53,7 @@ public class Usuario {
 	private String identificador;
 	
 	@Column(name="ativa", length = 14, nullable = false)
-	private Boolean ativa;*/
+	private Boolean ativa;
 	
     @Column(name = "profile", nullable = false)
     @ElementCollection(fetch = FetchType.EAGER)

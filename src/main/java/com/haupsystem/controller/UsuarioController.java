@@ -1,11 +1,11 @@
 package com.haupsystem.controller;
 import java.net.URI;
+import java.util.List;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,16 +33,23 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     
-    @GetMapping("/{id}")
-    public ResponseEntity<Usuario> findById(@PathVariable Long id) {
+    @GetMapping("/carregar/{id}")
+    public ResponseEntity<Usuario> carregarPorId(@PathVariable Long id) {
         Usuario obj = this.usuarioService.findById(id);
         return ResponseEntity.ok().body(obj);
     }
     
+    @GetMapping("/listar")
+    public ResponseEntity<List<Usuario>> listarTodos() {
+        List<Usuario> lista = usuarioService.listar();
+        return ResponseEntity.ok().body(lista);
+    }
+    
     @PostMapping
     public ResponseEntity<Void> create(@Valid @RequestBody UsuarioCreateDTO obj) {
-        Usuario Usuario = this.usuarioService.fromDTO(obj);
-        Usuario newUsuario = this.usuarioService.create(Usuario);
+    	System.out.println("chegou aqui "+obj);
+        Usuario usuario = this.usuarioService.fromDTO(obj);
+        Usuario newUsuario = this.usuarioService.create(usuario);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(newUsuario.getId()).toUri();
         return ResponseEntity.created(uri).build();

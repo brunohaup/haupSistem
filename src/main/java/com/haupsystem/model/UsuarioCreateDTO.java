@@ -14,10 +14,20 @@ public class UsuarioCreateDTO {
 
     @NotBlank
     @Size(min = 2, max = 100)
-    private String username;
+    private String userName;
 
     @NotBlank
     @Size(min = 8, max = 60)
     private String password;
+    
+    @NotBlank
+    @Size(max = 100)
+    private String nome;
+    
+    @Size(max = 255)
+    private String email;
+    
+    @Size(max = 14)
+    private String identificador;
 
 }

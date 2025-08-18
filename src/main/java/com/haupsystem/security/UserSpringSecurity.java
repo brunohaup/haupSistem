@@ -1,14 +1,16 @@
 package com.haupsystem.security;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.haupsystem.model.ProfileEnum;
+import com.haupsystem.model.Usuario;
+import com.haupsystem.model.Usuario.TipoUsuario;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,13 +25,23 @@ public class UserSpringSecurity implements UserDetails {
     private String username;
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
-
-    public UserSpringSecurity(Long id, String username, String password, Set<ProfileEnum> tipoUsuario) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.authorities = tipoUsuario.stream().map(x -> new SimpleGrantedAuthority(x.getDescription()))
-                .collect(Collectors.toList());
+    private String nome;
+    private TipoUsuario tipo;
+    
+    
+    private Instant lastLogin;
+    private Instant passwordExpiration;
+    
+    public UserSpringSecurity(Usuario u) {
+        this.id = u.getId();
+        this.username = u.getUsername();
+        this.password = u.getPassword();
+        this.lastLogin = u.getUltimoLoginEm();
+        
+        List<SimpleGrantedAuthority> listaTipoUsurio = new ArrayList<SimpleGrantedAuthority>();
+        listaTipoUsurio.add(new SimpleGrantedAuthority(u.getTipo().name()));
+        this.authorities = listaTipoUsurio;
+        this.tipo = u.getTipo();
     }
 
     @Override
@@ -51,8 +63,5 @@ public class UserSpringSecurity implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
-    public boolean hasRole(ProfileEnum tipoUsuario) {
-        return getAuthorities().contains(new SimpleGrantedAuthority(tipoUsuario.getDescription()));
-    }
+    
 }

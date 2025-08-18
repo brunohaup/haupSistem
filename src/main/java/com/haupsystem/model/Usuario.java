@@ -1,14 +1,9 @@
 package com.haupsystem.model;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.time.Instant;
 
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -25,6 +20,10 @@ import lombok.Data;
 @Table(name="usuario")
 @Data
 public class Usuario {
+	
+	public enum TipoUsuario {
+		ADMIN, USUARIO;
+	}
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,10 +51,16 @@ public class Usuario {
 	@Column(name="identificador", length = 14, nullable = true)
 	private String identificador;
 	
-	@Column(name="ativa", length = 14, nullable = false)
+	@Column(name="ativa", nullable = false)
 	private Boolean ativa;
 	
-    @Column(name = "profile", nullable = false)
+	@Column(name = "ultimoLoginEm")
+    private Instant ultimoLoginEm;
+	
+	@Column(name = "tipo")
+	private TipoUsuario tipo;
+	
+    /*@Column(name = "profile", nullable = false)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_profile")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -67,6 +72,6 @@ public class Usuario {
 
     public void addProfile(ProfileEnum profileEnum) {
         this.profiles.add(profileEnum.getCode());
-    }
+    }*/
 	
 }

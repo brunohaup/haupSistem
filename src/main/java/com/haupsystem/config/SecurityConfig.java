@@ -1,6 +1,7 @@
 package com.haupsystem.config;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -8,13 +9,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,63 +27,93 @@ import com.haupsystem.security.JWTUtil;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-        private AuthenticationManager authenticationManager;
+    private AuthenticationManager authenticationManager;
 
-        @Autowired
-        private UserDetailsService userDetailsService;
+    @Autowired
+    private UserDetailsService userDetailsService;
 
-        @Autowired
-        private JWTUtil jwtUtil;
+    @Autowired
+    private JWTUtil jwtUtil;
 
-        private static final String[] PUBLIC_MATCHERS = {
-                        "/"
-        };
-        private static final String[] PUBLIC_MATCHERS_POST = {
-                        "/usuario",
-                        "/login"
-        };
+    private static final String[] PUBLIC_MATCHERS = {
+        "/"
+    };
+    
+    private static final String[] PUBLIC_MATCHERS_POST = {
+        "/usuario",
+        "/login",
+        "/compras",
+        "/compras/nova"
+    };
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-                http.cors().and().csrf().disable();
+        http.cors().and().csrf().disable();
 
-                AuthenticationManagerBuilder authenticationManagerBuilder = http
-                                .getSharedObject(AuthenticationManagerBuilder.class);
-                authenticationManagerBuilder.userDetailsService(this.userDetailsService)
-                                .passwordEncoder(bCryptPasswordEncoder());
-                this.authenticationManager = authenticationManagerBuilder.build();
+        // AuthenticationManager
+        AuthenticationManagerBuilder authManagerBuilder =
+            http.getSharedObject(AuthenticationManagerBuilder.class);
 
-                http.authorizeRequests()
-                                .antMatchers(HttpMethod.POST, PUBLIC_MATCHERS_POST).permitAll()
-                                .antMatchers(PUBLIC_MATCHERS).permitAll()
-                                .anyRequest().authenticated().and()
-                                .authenticationManager(authenticationManager);
+        authManagerBuilder
+            .userDetailsService(this.userDetailsService)
+            .passwordEncoder(bCryptPasswordEncoder());
 
-                http.addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil));
-                http.addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil,
-                                this.userDetailsService));
+        this.authenticationManager = authManagerBuilder.build();
 
-                http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        // Converte arrays de String para RequestMatcher[]
+        RequestMatcher[] publicPostMatchers = Stream.of(PUBLIC_MATCHERS_POST)
+            .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
+            .toArray(RequestMatcher[]::new);
 
-                return http.build();
-        }
+        RequestMatcher[] publicAnyMethodMatchers = Stream.of(PUBLIC_MATCHERS)
+            .map(AntPathRequestMatcher::new) // qualquer método
+            .toArray(RequestMatcher[]::new);
 
-        @Bean
-        CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
-                configuration.setAllowedMethods(Arrays.asList("POST", "GET", "PUT", "DELETE"));
-                final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", configuration);
-                return source;
-        }
+        http
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // públicos POST
+                .requestMatchers(publicPostMatchers).hasRole("ADMIN")
+                // públicos (qualquer método)
+                .requestMatchers(publicAnyMethodMatchers).permitAll()
+                // RBAC de exemplo
+                //.requestMatchers("/admin/**").hasRole("ADMIN")
+                //.requestMatchers("/usuario/**").hasAnyRole("ADMIN", "USUARIO")
+                // resto precisa estar autenticado
+                .anyRequest().authenticated()
+            )
+            // AuthenticationManager usado pelos filtros
+            .authenticationManager(this.authenticationManager)
+            // Se os teus filtros custom estendem as classes padrão, podes manter addFilter(...)
+            .addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil))
+            .addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil, this.userDetailsService));
 
-        @Bean
-        public BCryptPasswordEncoder bCryptPasswordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+        return http.build();
+    }
+    
+    @Bean
+    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+        return http.getSharedObject(AuthenticationManagerBuilder.class)
+                .userDetailsService(userDetailsService)
+                .passwordEncoder(bCryptPasswordEncoder())
+                .and()
+                .build();
+    }
 
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
+        configuration.setAllowedMethods(Arrays.asList("POST", "GET", "PUT", "DELETE", "OPTIONS"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

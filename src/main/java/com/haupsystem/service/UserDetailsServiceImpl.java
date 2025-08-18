@@ -23,7 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Usuario user = this.repositorioUsuario.findByUsername(username);
         if (Objects.isNull(user))
             throw new UsernameNotFoundException("Usuário não encontrado: " + username);
-        return new UserSpringSecurity(user.getId(), user.getUsername(), user.getPassword(), user.getProfiles());
+        return new UserSpringSecurity(user);
     }
 
 }

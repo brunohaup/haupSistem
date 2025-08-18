@@ -1,5 +1,7 @@
 package com.haupsystem.model;
 
+import com.haupsystem.model.Usuario.TipoUsuario;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,5 +17,6 @@ public class UsuarioUpdateDTO {
 	private String nome;
 	private String identificador;
 	private Boolean ativa;
+	private TipoUsuario tipo;
 
 }

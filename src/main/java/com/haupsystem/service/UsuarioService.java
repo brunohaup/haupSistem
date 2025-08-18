@@ -3,8 +3,6 @@ package com.haupsystem.service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.Valid;
 
@@ -14,8 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.haupsystem.model.ProfileEnum;
 import com.haupsystem.model.Usuario;
+import com.haupsystem.model.Usuario.TipoUsuario;
 import com.haupsystem.model.UsuarioCreateDTO;
 import com.haupsystem.model.UsuarioUpdateDTO;
 import com.haupsystem.repository.RepositorioUsuario;
@@ -34,9 +32,9 @@ public class UsuarioService {
     private RepositorioUsuario repositorioUsuario;
 
     public Usuario findById(Long id) {
-        UserSpringSecurity UsuarioSpringSecurity = authenticated();
-        if (!Objects.nonNull(UsuarioSpringSecurity)
-                || !UsuarioSpringSecurity.hasRole(ProfileEnum.ADMIN) && !id.equals(UsuarioSpringSecurity.getId()))
+        UserSpringSecurity usuarioSpringSecurity = authenticated();
+        if (!Objects.nonNull(usuarioSpringSecurity)
+                || !usuarioSpringSecurity.getTipo().equals(TipoUsuario.ADMIN) && !id.equals(usuarioSpringSecurity.getId()))
             throw new AuthorizationException("Acesso negado!");
 
         Optional<Usuario> Usuario = this.repositorioUsuario.findById(id);
@@ -46,7 +44,7 @@ public class UsuarioService {
     
     public List<Usuario> listar() {
         UserSpringSecurity usuarioLogado = authenticated();
-        if (usuarioLogado == null || !usuarioLogado.hasRole(ProfileEnum.ADMIN)) {
+        if (usuarioLogado == null || !usuarioLogado.getTipo().equals(TipoUsuario.ADMIN)) {
             throw new AuthorizationException("Acesso negado!");
         }
         return repositorioUsuario.findAll();
@@ -55,7 +53,6 @@ public class UsuarioService {
     @Transactional
     public Usuario create(Usuario obj) {
         obj.setId(null);
-        obj.setProfiles(Stream.of(ProfileEnum.USER.getCode()).collect(Collectors.toSet()));
         obj = this.repositorioUsuario.save(obj);
         return obj;
     }

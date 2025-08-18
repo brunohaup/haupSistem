@@ -3,6 +3,8 @@ package com.haupsystem.model;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
+import com.haupsystem.model.Usuario.TipoUsuario;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,5 +31,7 @@ public class UsuarioCreateDTO {
     
     @Size(max = 14)
     private String identificador;
+    
+    private TipoUsuario tipo;
 
 }

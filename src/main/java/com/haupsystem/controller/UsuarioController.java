@@ -47,7 +47,6 @@ public class UsuarioController {
     
     @PostMapping
     public ResponseEntity<Void> create(@Valid @RequestBody UsuarioCreateDTO obj) {
-    	System.out.println("chegou aqui "+obj);
         Usuario usuario = this.usuarioService.fromDTO(obj);
         Usuario newUsuario = this.usuarioService.create(usuario);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()

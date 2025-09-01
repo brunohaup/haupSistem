@@ -1,5 +1,6 @@
 package com.haupsystem.model;
 
+import java.math.BigInteger;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -14,39 +15,32 @@ import javax.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name="compraItem")
+@Table(name="compraItemOrcamento")
 @Data
-public class CompraItem {
+public class CompraItemOrcamento {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", nullable=false)
 	private Long id;
 	
-	@ManyToOne(targetEntity=Compra.class)
-    @JoinColumn(name="idCompra", nullable=false)
-	private Compra compra;
+	@ManyToOne(targetEntity=CompraItem.class)
+    @JoinColumn(name="idCompraItem", nullable=false)
+	private CompraItem compraItem;
 	
 	@Column(name = "dataHoraInclusao", nullable=false)
 	private Date dataHoraInclusao;
 	
-	@Column(name = "nome", nullable=false)
-	private String nome;
+	@Column(name = "fornecedor", nullable=false)
+	private String fornecedor;
 	
 	@Column(name = "observacoes", nullable=true)
 	private String observacoes;
 	
-	@Column(name = "quantidade", nullable=false)
-	private Long quantidade;
+	@Column(name = "precoUnitario", nullable=false)
+	private BigInteger precoUnitario;
 	
-	@Column(name = "aprovado", nullable=true)
-	private Boolean aprovado;
-	
-	@Column(name = "motivoRecusa", nullable=true)
-	private String motivoRecusa;
-	
-	@ManyToOne(targetEntity=CompraItemOrcamento.class)
-    @JoinColumn(name="idOrcamentoSelecionado", nullable=true)
-	private CompraItemOrcamento orcamentoSelecionado;
+	@Column(name = "prazoEntrega", nullable=false)
+	private Long prazoEntrega;
 	
 }

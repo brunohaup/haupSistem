@@ -60,18 +60,4 @@ public class Usuario {
 	@Column(name = "tipo")
 	private TipoUsuario tipo;
 	
-    /*@Column(name = "profile", nullable = false)
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_profile")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private Set<Integer> profiles = new HashSet<>();
-
-    public Set<ProfileEnum> getProfiles() {
-        return this.profiles.stream().map(x -> ProfileEnum.toEnum(x)).collect(Collectors.toSet());
-    }
-
-    public void addProfile(ProfileEnum profileEnum) {
-        this.profiles.add(profileEnum.getCode());
-    }*/
-	
 }

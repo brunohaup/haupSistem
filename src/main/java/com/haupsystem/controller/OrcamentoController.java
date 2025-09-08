@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.haupsystem.model.CompraItemOrcamento;
+import com.haupsystem.model.CompraItemOrcamentoDto;
 import com.haupsystem.model.OrcamentoDto;
 import com.haupsystem.service.OrcamentoService;
 
@@ -28,8 +29,8 @@ public class OrcamentoController {
 
     // GET - Lista orçamentos por item de compra
     @GetMapping("/item/{idCompraItem}")
-    public ResponseEntity<List<CompraItemOrcamento>> listarOrcamentosPorItem(@PathVariable Long idCompraItem) {
-        List<CompraItemOrcamento> orcamentos = orcamentoService.listarPorItem(idCompraItem);
+    public ResponseEntity<List<CompraItemOrcamentoDto>> listarOrcamentosPorItem(@PathVariable Long idCompraItem) {
+        List<CompraItemOrcamentoDto> orcamentos = orcamentoService.listarPorItem(idCompraItem);
         return ResponseEntity.ok(orcamentos);
     }
 

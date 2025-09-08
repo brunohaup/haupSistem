@@ -15,18 +15,23 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.haupsystem.model.Arquivo;
 import com.haupsystem.model.Compra;
 import com.haupsystem.model.Compra.EtapaCompra;
 import com.haupsystem.model.CompraDto;
 import com.haupsystem.model.CompraDtoMapper;
 import com.haupsystem.model.CompraItem;
+import com.haupsystem.model.CompraItemArquivo;
+import com.haupsystem.model.CompraItemArquivoDto;
 import com.haupsystem.model.CompraItemDto;
 import com.haupsystem.model.CompraItemOrcamento;
 import com.haupsystem.model.CompraPageDto;
 import com.haupsystem.model.Usuario;
 import com.haupsystem.repository.RepositorioCompra;
 import com.haupsystem.repository.RepositorioCompraItem;
+import com.haupsystem.repository.RepositorioCompraItemArquivo;
 import com.haupsystem.repository.RepositorioCompraItemOrcamento;
 import com.haupsystem.repository.RepositorioUsuario;
 import com.haupsystem.security.UserSpringSecurity;
@@ -46,6 +51,11 @@ public class CompraService {
 	private final RepositorioCompraItem repositorioCompraItem;
 	@Autowired
 	private final RepositorioCompraItemOrcamento repositorioCompraItemOrcamento;
+	@Autowired
+	private final RepositorioCompraItemArquivo repositorioCompraItemArquivo;
+	
+	@Autowired
+	private final ArquivoService arquivoService;
 
     // Lista apenas as compras do usuário logado
     public List<Compra> listarComprasUsuarioLogado() {
@@ -110,6 +120,9 @@ public class CompraService {
         	itemDto.setObservacoes(item.getObservacoes());
         	itemDto.setAprovado(item.getAprovado());
         	itemDto.setMotivoRecusa(item.getMotivoRecusa());
+        	if(item.getOrcamentoSelecionado() != null) {
+        		itemDto.setIdOrcamentoSelecionado(item.getOrcamentoSelecionado().getId());
+        	}
         	listaDtoItem.add(itemDto);
         });
         
@@ -235,6 +248,8 @@ public class CompraService {
             }
             case APROVADA: 
             case APROVADA_PARCIAL: {
+            	entity.setEtapa(EtapaCompra.FINALIZADA);
+                entity.setDataHoraFinalizada(new Date());
                 break;
             }
             case REALIZADA: {
@@ -421,4 +436,58 @@ public class CompraService {
         dto.setSolicitanteNome(compra.getSolicitante().getNome());
         return dto;
     }
+    
+    public CompraItemArquivoDto incluirNotaVinculandoComItem(MultipartFile file, Long idItem) {
+    	
+    	Arquivo arquivo = arquivoService.incluir(file);
+    	
+    	CompraItem item = repositorioCompraItem.findById(idItem).get();
+    	
+    	CompraItemArquivo compraItemArquivo = new CompraItemArquivo();
+    	compraItemArquivo.setArquivo(arquivo);
+    	compraItemArquivo.setCompraItem(item);
+    	
+    	compraItemArquivo = repositorioCompraItemArquivo.save(compraItemArquivo);
+    	
+    	return convertCompraItemArquivoToDto(compraItemArquivo);
+    	
+    }
+    
+    private CompraItemArquivoDto convertCompraItemArquivoToDto(CompraItemArquivo compraItemArquivo) {
+    	CompraItemArquivoDto dto = new CompraItemArquivoDto();
+        dto.setId(compraItemArquivo.getId());
+        dto.setIdItem(compraItemArquivo.getCompraItem().getId());
+        dto.setNomeItem(compraItemArquivo.getCompraItem().getNome());
+        dto.setIdArquivo(compraItemArquivo.getArquivo().getId());
+        dto.setNomeArquivo(compraItemArquivo.getArquivo().getNomeOriginal());
+        dto.setTamanhoArquivo(compraItemArquivo.getArquivo().getTamanho());
+        return dto;
+    }
+    
+    public List<CompraItemArquivoDto> listarNotasDoItem(Long idItem) {
+    	
+    	List<CompraItemArquivo> listaCompraItemArquivo = repositorioCompraItemArquivo.findByCompraItemId(idItem);
+    	
+    	List<CompraItemArquivoDto> listaDtos = new ArrayList<>();
+    	listaCompraItemArquivo.forEach(compraItemArquivo -> {
+    		CompraItemArquivoDto dto = convertCompraItemArquivoToDto(compraItemArquivo);
+    		listaDtos.add(dto);
+    	});
+    	
+    	return listaDtos;
+    	
+    }
+    
+    public void removerNota(Long idCompraItemArquivo) {
+    	
+    	try {
+	    	CompraItemArquivo compraItemArquivo = repositorioCompraItemArquivo.findById(idCompraItemArquivo).get();
+	    	repositorioCompraItemArquivo.delete(compraItemArquivo);
+	    	arquivoService.deletar(compraItemArquivo.getArquivo());
+    	} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	
+    }
+    
 }

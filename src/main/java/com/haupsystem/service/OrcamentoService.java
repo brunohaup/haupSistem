@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haupsystem.model.CompraItem;
 import com.haupsystem.model.CompraItemOrcamento;
+import com.haupsystem.model.CompraItemOrcamentoDto;
 import com.haupsystem.model.OrcamentoDto;
 import com.haupsystem.repository.RepositorioCompraItem;
 import com.haupsystem.repository.RepositorioCompraItemOrcamento;
@@ -27,10 +29,18 @@ public class OrcamentoService {
     @Autowired
     private RepositorioCompraItem repositorioCompraItem;
 
-    public List<CompraItemOrcamento> listarPorItem(Long idCompraItem) {
+    public List<CompraItemOrcamentoDto> listarPorItem(Long idCompraItem) {
         CompraItem item = repositorioCompraItem.findById(idCompraItem)
             .orElseThrow(() -> new RuntimeException("Item de compra não encontrado"));
-        return repositorioOrcamento.findByCompraItem(item);
+        
+        List<CompraItemOrcamentoDto> listaDtos = new ArrayList<>();
+        
+        List<CompraItemOrcamento> listaEntidade = repositorioOrcamento.findByCompraItem(item);
+        listaEntidade.forEach(entidade -> listaDtos.add(retornaDto(entidade)));
+        
+        //System.out.println(listaEntidade);
+        
+        return listaDtos;
     }
 
     @Transactional
@@ -120,4 +130,23 @@ public class OrcamentoService {
 
         return relatorio;
     }
+    
+    public CompraItemOrcamentoDto retornaDto(CompraItemOrcamento orcamento) {
+    	
+    	CompraItemOrcamentoDto dto = new CompraItemOrcamentoDto();
+    	dto.setId(orcamento.getId());
+    	dto.setDataHoraInclusao(orcamento.getDataHoraInclusao());
+    	dto.setFornecedor(orcamento.getFornecedor());
+    	dto.setIdCompraItem(orcamento.getCompraItem().getId());
+    	dto.setObservacoes(orcamento.getObservacoes());
+    	dto.setPrazoEntrega(orcamento.getPrazoEntrega());
+    	dto.setPrecoUnitario(orcamento.getPrecoUnitario());
+    	
+    	return dto;
+    }
+    
+    public void retornaListaFornecedores() {
+    	 
+    }
+    
 }

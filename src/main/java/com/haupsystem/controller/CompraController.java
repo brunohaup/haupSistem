@@ -5,6 +5,7 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.haupsystem.model.Compra;
 import com.haupsystem.model.CompraDto;
+import com.haupsystem.model.CompraItemArquivoDto;
 import com.haupsystem.model.CompraPageDto;
 import com.haupsystem.service.CompraService;
 
@@ -80,6 +83,24 @@ public class CompraController {
         
         CompraPageDto resultado = compraService.listarComprasPaginadas(page, size, search, sortBy, sortDir);
         return ResponseEntity.ok(resultado);
+    }
+    
+    @PostMapping(value = "/incluirNota", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CompraItemArquivoDto> incluirNota(@RequestParam("file") MultipartFile file, @RequestParam("idItem") Long idItem) {
+    	CompraItemArquivoDto obj = compraService.incluirNotaVinculandoComItem(file, idItem);
+        return ResponseEntity.ok().body(obj);
+    }
+    
+    @GetMapping("/listarNotas/{id}")
+    public ResponseEntity<List<CompraItemArquivoDto>> listarNotasPorItem(@PathVariable Long id) {
+    	List<CompraItemArquivoDto> obj = this.compraService.listarNotasDoItem(id);
+        return ResponseEntity.ok().body(obj);
+    }
+    
+    @GetMapping("/removerNota/{id}")
+    public ResponseEntity<Void> removerNota(@PathVariable Long id) {
+    	this.compraService.removerNota(id);
+        return ResponseEntity.noContent().build();
     }
     
 }

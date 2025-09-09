@@ -1,16 +1,15 @@
-FROM ubuntu:latest AS build
+# Usando JDK 17 leve
+FROM eclipse-temurin:17-jdk-alpine
 
-RUN apt-get update
-RUN apt-get install openjdk-17-jdk -y
-COPY . .
+# Diretório de trabalho dentro do container
+WORKDIR /app
 
-RUN apt-get install maven -y
-RUN mvn clean install 
+# Copia o JAR gerado localmente
+COPY target/haupsystem-0.0.1-SNAPSHOT.jar app.jar
 
-FROM openjdk:17-jdk-slim
-
+# Expõe a porta que o Spring Boot vai usar
 EXPOSE 8080
 
-COPY --from=build /target/haupsystem-0.0.1-SNAPSHOT.jar app.jar
+# Comando para rodar a aplicação
+ENTRYPOINT ["java", "-jar", "app.jar"]
 
-ENTRYPOINT [ "java", "-jar", "app.jar" ]

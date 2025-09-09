@@ -1,15 +1,18 @@
-# Usando JDK 17 leve
 FROM eclipse-temurin:17-jdk-alpine
 
-# Diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copia o JAR gerado localmente
-COPY target/haupsystem-0.0.1-SNAPSHOT.jar app.jar
+# Instala Maven
+RUN apk add --no-cache maven git bash
 
-# Expõe a porta que o Spring Boot vai usar
+# Copia todo o código-fonte
+COPY . .
+
+# Build do projeto (gera o JAR)
+RUN mvn clean package -DskipTests
+
+# Expõe porta
 EXPOSE 8080
 
-# Comando para rodar a aplicação
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+# Rodar a aplicação
+ENTRYPOINT ["java", "-jar", "target/haupsystem-0.0.1-SNAPSHOT.jar"]

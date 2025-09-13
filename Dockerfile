@@ -1,20 +1,33 @@
-# Imagem JDK 17
-FROM eclipse-temurin:17-jdk-alpine
+# Usa uma imagem base com o OpenJDK para compilação
+FROM maven:3.8.5-openjdk-17-slim AS build
 
-# Diretório de trabalho
+# Define o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-# Instala Maven e bash
-RUN apk add --no-cache maven bash
+# Copia o arquivo pom.xml para gerenciar as dependências
+COPY pom.xml .
 
-# Copia todo o código-fonte
-COPY . .
+# Baixa as dependências do Maven
+RUN mvn dependency:go-offline
 
-# Build do projeto (gera o JAR)
-RUN mvn clean package -DskipTests
+# Copia todo o código-fonte da sua aplicação
+COPY src ./src
 
-# Expõe a porta do Spring Boot
+# Compila o projeto e cria o arquivo .jar
+RUN mvn clean install -DskipTests
+
+# --- Segunda etapa: Cria o ambiente de execução final ---
+
+# Usa uma imagem mais leve com o OpenJDK para rodar a aplicação
+FROM openjdk:17-jdk-slim
+
+# Define o diretório de trabalho
+WORKDIR /app
+
+# Copia o arquivo .jar da etapa de compilação
+COPY --from=build /app/target/*.jar ./app.jar
+
+# Define o comando que será executado quando o contêiner iniciar
+# Use a porta 8080, o Render vai mapeá-la para a porta externa
 EXPOSE 8080
-
-# Comando para rodar a aplicação
-ENTRYPOINT ["java", "-jar", "target/haupsystem-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -19,7 +19,8 @@ import com.haupsystem.repository.RepositorioArquivo;
 @Service
 public class ArquivoServiceHelper {
 	
-	@Value("${diretorio.arquivos}")
+	//{diretorio.arquivos}
+	@Value("${supabase.url}")
     private String diretorioBase;
 		
 	@Autowired

@@ -72,23 +72,18 @@ public class SecurityConfig {
             .toArray(RequestMatcher[]::new);
 
         http
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // públicos POST
-                .requestMatchers(publicPostMatchers).hasRole("ADMIN")
-                // públicos (qualquer método)
-                .requestMatchers(publicAnyMethodMatchers).permitAll()
-                // RBAC de exemplo
-                //.requestMatchers("/admin/**").hasRole("ADMIN")
-                //.requestMatchers("/usuario/**").hasAnyRole("ADMIN", "USUARIO")
-                // resto precisa estar autenticado
-                .anyRequest().authenticated()
-            )
-            // AuthenticationManager usado pelos filtros
-            .authenticationManager(this.authenticationManager)
-            // Se os teus filtros custom estendem as classes padrão, podes manter addFilter(...)
-            .addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil))
-            .addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil, this.userDetailsService));
+        .cors().and()
+        .csrf().disable()
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS")).permitAll()
+            .requestMatchers(publicPostMatchers).permitAll()
+            .requestMatchers(publicAnyMethodMatchers).permitAll()
+            .anyRequest().authenticated()
+        )
+        .authenticationManager(this.authenticationManager)
+        .addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil))
+        .addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil, this.userDetailsService));
 
         return http.build();
     }

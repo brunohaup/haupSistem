@@ -37,14 +37,19 @@ public class SecurityConfig {
 
     @Autowired
     private JWTUtil jwtUtil;
-
+    
     private static final String[] PUBLIC_MATCHERS = {
         "/"
     };
-    
-    private static final String[] PUBLIC_MATCHERS_POST = {
-        "/usuario",
-        "/login",
+
+    // Endpoints POST que qualquer um pode acessar (sem autenticação)
+    private static final String[] PUBLIC_MATCHERS_POST_PERMIT_ALL = {
+        "/usuario", // Assumindo que é o cadastro de um novo usuário
+        "/login"
+    };
+
+    // Endpoints POST que exigem o papel de ADMIN
+    private static final String[] PUBLIC_MATCHERS_POST_ADMIN = {
         "/compras",
         "/compras/nova"
     };
@@ -67,28 +72,30 @@ public class SecurityConfig {
 
         this.authenticationManager = authManagerBuilder.build();
 
-        // Converte arrays de String para RequestMatcher[]
-        RequestMatcher[] publicPostMatchers = Stream.of(PUBLIC_MATCHERS_POST)
-            .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
-            .toArray(RequestMatcher[]::new);
+        RequestMatcher[] publicPostPermitAllMatchers = Stream.of(PUBLIC_MATCHERS_POST_PERMIT_ALL)
+    	    .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
+    	    .toArray(RequestMatcher[]::new);
 
-        RequestMatcher[] publicAnyMethodMatchers = Stream.of(PUBLIC_MATCHERS)
-            .map(AntPathRequestMatcher::new) // qualquer método
-            .toArray(RequestMatcher[]::new);
+    	RequestMatcher[] publicPostAdminMatchers = Stream.of(PUBLIC_MATCHERS_POST_ADMIN)
+    	    .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
+    	    .toArray(RequestMatcher[]::new);
 
-        http
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // públicos POST
-                .requestMatchers(publicPostMatchers).hasRole("ADMIN")
-                // públicos (qualquer método)
-                .requestMatchers(publicAnyMethodMatchers).permitAll()
-                // RBAC de exemplo
-                //.requestMatchers("/admin/**").hasRole("ADMIN")
-                //.requestMatchers("/usuario/**").hasAnyRole("ADMIN", "USUARIO")
-                // resto precisa estar autenticado
-                .anyRequest().authenticated()
-            )
+    	RequestMatcher[] publicAnyMethodMatchers = Stream.of(PUBLIC_MATCHERS)
+    	    .map(AntPathRequestMatcher::new)
+    	    .toArray(RequestMatcher[]::new);
+
+    	http
+    	    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    	    .authorizeHttpRequests(auth -> auth
+    	        // Permite POST anônimo para login e cadastro
+    	        .requestMatchers(publicPostPermitAllMatchers).permitAll()
+    	        // Exige ADMIN para os outros POSTs
+    	        .requestMatchers(publicPostAdminMatchers).hasRole("ADMIN")
+    	        // públicos (qualquer método)
+    	        .requestMatchers(publicAnyMethodMatchers).permitAll()
+    	        // resto precisa estar autenticado
+    	        .anyRequest().authenticated()
+    	    )
             // AuthenticationManager usado pelos filtros
             .authenticationManager(this.authenticationManager)
             // Se os teus filtros custom estendem as classes padrão, podes manter addFilter(...)

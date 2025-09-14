@@ -19,8 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import com.haupsystem.security.JWTAuthenticationFilter;
 import com.haupsystem.security.JWTAuthorizationFilter;
@@ -73,32 +73,26 @@ public class SecurityConfig {
         this.authenticationManager = authManagerBuilder.build();
 
         RequestMatcher[] publicPostPermitAllMatchers = Stream.of(PUBLIC_MATCHERS_POST_PERMIT_ALL)
-    	    .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
-    	    .toArray(RequestMatcher[]::new);
+            .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
+            .toArray(RequestMatcher[]::new);
 
-    	RequestMatcher[] publicPostAdminMatchers = Stream.of(PUBLIC_MATCHERS_POST_ADMIN)
-    	    .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
-    	    .toArray(RequestMatcher[]::new);
+        RequestMatcher[] publicPostAdminMatchers = Stream.of(PUBLIC_MATCHERS_POST_ADMIN)
+            .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
+            .toArray(RequestMatcher[]::new);
 
-    	RequestMatcher[] publicAnyMethodMatchers = Stream.of(PUBLIC_MATCHERS)
-    	    .map(AntPathRequestMatcher::new)
-    	    .toArray(RequestMatcher[]::new);
+        RequestMatcher[] publicAnyMethodMatchers = Stream.of(PUBLIC_MATCHERS)
+            .map(AntPathRequestMatcher::new)
+            .toArray(RequestMatcher[]::new);
 
-    	http
-    	    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-    	    .authorizeHttpRequests(auth -> auth
-    	        // Permite POST anônimo para login e cadastro
-    	        .requestMatchers(publicPostPermitAllMatchers).permitAll()
-    	        // Exige ADMIN para os outros POSTs
-    	        .requestMatchers(publicPostAdminMatchers).hasRole("ADMIN")
-    	        // públicos (qualquer método)
-    	        .requestMatchers(publicAnyMethodMatchers).permitAll()
-    	        // resto precisa estar autenticado
-    	        .anyRequest().authenticated()
-    	    )
-            // AuthenticationManager usado pelos filtros
+        http
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(publicPostPermitAllMatchers).permitAll()
+                .requestMatchers(publicPostAdminMatchers).hasRole("ADMIN")
+                .requestMatchers(publicAnyMethodMatchers).permitAll()
+                .anyRequest().authenticated()
+            )
             .authenticationManager(this.authenticationManager)
-            // Se os teus filtros custom estendem as classes padrão, podes manter addFilter(...)
             .addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil))
             .addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil, this.userDetailsService));
 
@@ -115,17 +109,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-    	CorsConfiguration configuration = new CorsConfiguration();
-    	configuration.setAllowedOrigins(Arrays.asList("https://haup-system.vercel.app"));
-    	//configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedOrigins(Arrays.asList(
+            "https://haup-system.vercel.app",
+            "http://localhost:3000" // opcional, para testes locais
+        ));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+        source.registerCorsConfiguration("/**", config);
+
+        return new CorsFilter(source);
     }
 
     @Bean

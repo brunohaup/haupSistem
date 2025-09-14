@@ -113,12 +113,9 @@ public class SecurityConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList(
-            "https://haup-system.vercel.app",
-            "http://localhost:3000" // opcional, para testes locais
-        ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        config.addAllowedOriginPattern("*"); // 🔓 aceita qualquer origem
+        config.addAllowedHeader("*");        // 🔓 aceita qualquer header
+        config.addAllowedMethod("*");        // 🔓 aceita qualquer método (GET, POST, PUT, DELETE, OPTIONS)
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

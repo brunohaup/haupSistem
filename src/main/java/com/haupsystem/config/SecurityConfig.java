@@ -17,8 +17,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import com.haupsystem.security.JWTAuthenticationFilter;
 import com.haupsystem.security.JWTAuthorizationFilter;
@@ -35,23 +35,18 @@ public class SecurityConfig {
 
     @Autowired
     private JWTUtil jwtUtil;
-    
+
     private static final String[] PUBLIC_MATCHERS = {
         "/"
     };
-
-    // Endpoints POST que qualquer um pode acessar (sem autenticação)
-    private static final String[] PUBLIC_MATCHERS_POST_PERMIT_ALL = {
-        "/usuario", // Assumindo que é o cadastro de um novo usuário
-        "/login"
-    };
-
-    // Endpoints POST que exigem o papel de ADMIN
-    private static final String[] PUBLIC_MATCHERS_POST_ADMIN = {
+    
+    private static final String[] PUBLIC_MATCHERS_POST = {
+        "/usuario",
+        "/login",
         "/compras",
         "/compras/nova"
     };
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -67,28 +62,31 @@ public class SecurityConfig {
 
         this.authenticationManager = authManagerBuilder.build();
 
-        RequestMatcher[] publicPostPermitAllMatchers = Stream.of(PUBLIC_MATCHERS_POST_PERMIT_ALL)
-            .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
-            .toArray(RequestMatcher[]::new);
-
-        RequestMatcher[] publicPostAdminMatchers = Stream.of(PUBLIC_MATCHERS_POST_ADMIN)
+        // Converte arrays de String para RequestMatcher[]
+        RequestMatcher[] publicPostMatchers = Stream.of(PUBLIC_MATCHERS_POST)
             .map(path -> new AntPathRequestMatcher(path, HttpMethod.POST.name()))
             .toArray(RequestMatcher[]::new);
 
         RequestMatcher[] publicAnyMethodMatchers = Stream.of(PUBLIC_MATCHERS)
-            .map(AntPathRequestMatcher::new)
+            .map(AntPathRequestMatcher::new) // qualquer método
             .toArray(RequestMatcher[]::new);
 
         http
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(publicPostPermitAllMatchers).permitAll()
-                .requestMatchers(publicPostAdminMatchers).hasRole("ADMIN")
+                // públicos POST
+                .requestMatchers(publicPostMatchers).hasRole("ADMIN")
+                // públicos (qualquer método)
                 .requestMatchers(publicAnyMethodMatchers).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS")).permitAll()
+                // RBAC de exemplo
+                //.requestMatchers("/admin/**").hasRole("ADMIN")
+                //.requestMatchers("/usuario/**").hasAnyRole("ADMIN", "USUARIO")
+                // resto precisa estar autenticado
                 .anyRequest().authenticated()
             )
+            // AuthenticationManager usado pelos filtros
             .authenticationManager(this.authenticationManager)
+            // Se os teus filtros custom estendem as classes padrão, podes manter addFilter(...)
             .addFilter(new JWTAuthenticationFilter(this.authenticationManager, this.jwtUtil))
             .addFilter(new JWTAuthorizationFilter(this.authenticationManager, this.jwtUtil, this.userDetailsService));
 
@@ -105,17 +103,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
+    CorsConfigurationSource corsConfigurationSource() {
+    	CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*"); // 🔓 aceita qualquer origem
-        config.addAllowedHeader("*");        // 🔓 aceita qualquer header
-        config.addAllowedMethod("*");        // 🔓 aceita qualquer método (GET, POST, PUT, DELETE, OPTIONS)
+        config.addAllowedOriginPattern("*"); // aceita qualquer origem
+        config.addAllowedHeader("*");        // aceita qualquer header
+        config.addAllowedMethod("*");        // aceita qualquer método
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
-        return new CorsFilter(source);
+        return source;
     }
 
     @Bean

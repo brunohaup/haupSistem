@@ -1,10 +1,8 @@
 package com.haupsystem.config;
 
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -54,9 +52,6 @@ public class SecurityConfig {
         "/compras/nova"
     };
     
-    @Value("${cors.allowed.origins}")
-	private String allowedOrigins;
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 

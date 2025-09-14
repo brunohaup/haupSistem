@@ -90,6 +90,7 @@ public class SecurityConfig {
                 .requestMatchers(publicPostPermitAllMatchers).permitAll()
                 .requestMatchers(publicPostAdminMatchers).hasRole("ADMIN")
                 .requestMatchers(publicAnyMethodMatchers).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS")).permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationManager(this.authenticationManager)

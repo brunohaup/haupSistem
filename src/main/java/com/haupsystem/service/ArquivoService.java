@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -30,6 +31,9 @@ public class ArquivoService  {
 	
 	@Autowired
 	ArquivoServiceHelper arquivoServiceHelper;
+	
+	@Autowired
+	SupabaseStorageService supabaseStorageService;
 
 	public Arquivo incluir(MultipartFile file) {
 
@@ -96,5 +100,37 @@ public class ArquivoService  {
 		}
 		return MediaType.parseMediaType(contentType);
 	}
+	
+	public Arquivo incluirNoSupabase(MultipartFile file) {
+		try {
+			
+			String username = SecurityContextHolder.getContext().getAuthentication().getName();
+	        Usuario usuarioLogado = repositorioUsuario.findByUsername(username);
+	        
+	        String diretorioSupabase = supabaseStorageService.uploadFile(file.getOriginalFilename(), file.getBytes());
+	        
+	        Arquivo arquivo = new Arquivo();
+			arquivo.setDataHoraInclusao(new Date());
+			arquivo.setUsuarioInclusao(usuarioLogado);
+			arquivo.setDiretorio(diretorioSupabase);
+			File filed = new File(diretorioSupabase);
+			arquivo.setTamanho(filed.length());
+			arquivo.setNomeOriginal(file.getOriginalFilename());
+			
+			String extensao = "";
+			if (file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")) {
+			    extensao = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1);
+			}
+			arquivo.setExtensao(extensao);
+			
+			repositorioArquivo.save(arquivo);
+
+			return arquivo;
+
+		} catch (IOException e) {
+			throw new RuntimeException("Erro ao salvar o arquivo", e);
+		}
+	}
+	
 
 }

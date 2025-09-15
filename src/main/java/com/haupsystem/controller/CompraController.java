@@ -1,5 +1,6 @@
 package com.haupsystem.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -86,7 +87,7 @@ public class CompraController {
     }
     
     @PostMapping(value = "/incluirNota", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CompraItemArquivoDto> incluirNota(@RequestParam("file") MultipartFile file, @RequestParam("idItem") Long idItem) {
+    public ResponseEntity<CompraItemArquivoDto> incluirNota(@RequestParam("file") MultipartFile file, @RequestParam("idItem") Long idItem) throws IOException {
     	CompraItemArquivoDto obj = compraService.incluirNotaVinculandoComItem(file, idItem);
         return ResponseEntity.ok().body(obj);
     }

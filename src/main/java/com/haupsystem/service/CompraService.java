@@ -1,4 +1,5 @@
 package com.haupsystem.service;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,6 +30,7 @@ import com.haupsystem.model.CompraItemDto;
 import com.haupsystem.model.CompraItemOrcamento;
 import com.haupsystem.model.CompraPageDto;
 import com.haupsystem.model.Usuario;
+import com.haupsystem.repository.RepositorioArquivo;
 import com.haupsystem.repository.RepositorioCompra;
 import com.haupsystem.repository.RepositorioCompraItem;
 import com.haupsystem.repository.RepositorioCompraItemArquivo;
@@ -53,9 +55,12 @@ public class CompraService {
 	private final RepositorioCompraItemOrcamento repositorioCompraItemOrcamento;
 	@Autowired
 	private final RepositorioCompraItemArquivo repositorioCompraItemArquivo;
+	@Autowired
+	RepositorioArquivo repositorioArquivo;
 	
 	@Autowired
 	private final ArquivoService arquivoService;
+	
 
     // Lista apenas as compras do usuário logado
     public List<Compra> listarComprasUsuarioLogado() {
@@ -437,9 +442,9 @@ public class CompraService {
         return dto;
     }
     
-    public CompraItemArquivoDto incluirNotaVinculandoComItem(MultipartFile file, Long idItem) {
+    public CompraItemArquivoDto incluirNotaVinculandoComItem(MultipartFile file, Long idItem) throws IOException {
     	
-    	Arquivo arquivo = arquivoService.incluir(file);
+    	Arquivo arquivo = arquivoService.incluirNoSupabase(file);
     	
     	CompraItem item = repositorioCompraItem.findById(idItem).get();
     	

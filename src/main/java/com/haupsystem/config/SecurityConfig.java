@@ -76,7 +76,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // públicos POST
-                .requestMatchers(publicPostMatchers).hasRole("ADMIN")
+                //.requestMatchers(publicPostMatchers).hasRole("ADMIN")
                 // públicos (qualquer método)
                 .requestMatchers(publicAnyMethodMatchers).permitAll()
                 // RBAC de exemplo
